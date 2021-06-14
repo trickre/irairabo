@@ -3,12 +3,37 @@
 	<body>
 		<h1>イライラゲーム棒</h1>
 		<div>
-			<svg></svg>
+			<svg id="svg" width="290" height="160"></svg>
 		</div>
 
 	</body>
 	<script>
-console.log("test");
-console.log("Hello commit");
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById('svg');
+// 自機（カーソル）
+const cursor = document.createElementNS(NS, 'circle');
+cursor.setAttribute('cx', 30);
+cursor.setAttribute('cy', 50);
+cursor.setAttribute('r', 10);
+cursor.setAttribute('fill', "#ED3");
+const move = function(dx, dy) {
+  let x = Number(cursor.getAttribute('cx'));
+  let y = Number(cursor.getAttribute('cy'));
+  cursor.setAttribute('cx', x+dx);
+  cursor.setAttribute('cy', y+dy);
+};
+svg.appendChild(cursor);
+// 障害物
+const barrier = document.createElementNS(NS, 'path');
+barrier.setAttribute('d', 'M200 20 L130 140');
+barrier.setAttribute('fill', 'trasparent');
+barrier.setAttribute('stroke', 'black');
+svg.appendChild(barrier);
+
+// 入力判定
+document.body.addEventListener('keydown',event=>{
+  if(event.key==='d') { move(+1, 0); }
+});
+// 当たり判定;宿題
 	</script>
 </html>
