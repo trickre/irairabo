@@ -1,9 +1,22 @@
 <html>
-	<header></header>
+	<header>
+<style type="text/css">
+.anime1 {
+  animation: strokeAnimation1 linear 3s infinite;
+}
+@keyframes strokeAnimation1{
+  from{transform-origin:185px 90px; transform: rotate(0);}
+  to  {transform-origin:185px 90px; transform: rotate(360deg);}
+}
+</style>
+        </header>
 	<body>
 		<h1>イライラゲーム棒</h1>
 		<div>
-			<svg id="svg" width="290" height="160"></svg>
+			<svg id="svg" width="290" height="160">
+ <rect x="180" y="10" width="10" height="170" stroke="#333333" fill="black" id="rot1" class="anime1"></rect>
+
+                        </svg>
 		</div>
 
 	</body>
@@ -30,10 +43,23 @@ const move = function(dx, dy) {
 svg.appendChild(cursor);
 // 障害物
 const barrier = document.createElementNS(NS, 'path');
-barrier.setAttribute('d', 'M200 20 L130 140');
-barrier.setAttribute('fill', 'trasparent');
+barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z');
+//barrier.setAttribute('fill', '');
 barrier.setAttribute('stroke', 'black');
 svg.appendChild(barrier);
+barrier.addEventListener('mouseover', event=>{
+  event.target.setAttribute('fill','red');
+});
+barrier.addEventListener('mouseout', event=>{
+  event.target.setAttribute('fill','black');
+});
+const rot1 = document.getElementById('rot1');
+rot1.addEventListener('mouseover', event=>{
+  event.target.setAttribute('fill','red');
+});
+rot1.addEventListener('mouseout', event=>{
+  event.target.setAttribute('fill','black');
+});
 
 // 入力判定
 document.body.addEventListener('keydown',event=>{
@@ -45,28 +71,34 @@ document.body.addEventListener('keydown',event=>{
 // 当たり判定
 function collision(path1) {
   // https://qiita.com/tydesign/items/4d3909a826363d8fc29f
-  const path2 = {x1:200, y1:20, x2:130, y2:140};
-  const a1 = path1.y2 - path1.y1;
-  const b1 = path1.x1 - path1.x2;
-  const c1 = path1.x2*path1.y1 - path1.x1*path1.y2;
-  const a2 = path2.y2 - path2.y1;
-  const b2 = path2.x1 - path2.x2;
-  const c2 = path2.x2*path2.y1 - path2.x1*path2.y2;
-  // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
-  const num_x = b1*c2 - b2*c1;
-  const num_y = a2*c1 - a1*c2;
-  const denom = a1*b2 - a2*b1;
-  if(denom == 0) return false;
-  // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
-  const ix = num_x / denom;
-  const iy = num_y / denom;
+  //const path2 = {x1:200, y1:20, x2:130, y2:140};
+  return [
+  {x1:200, y1: 20, x2:130, y2:140},
+  {x1:130, y1:140, x2:280, y2:140},
+  {x1:280, y1:140, x2:280, y2:100},
+  ].map(path2=>{
+    const a1 = path1.y2 - path1.y1;
+    const b1 = path1.x1 - path1.x2;
+    const c1 = path1.x2*path1.y1 - path1.x1*path1.y2;
+    const a2 = path2.y2 - path2.y1;
+    const b2 = path2.x1 - path2.x2;
+    const c2 = path2.x2*path2.y1 - path2.x1*path2.y2;
+    // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
+    const num_x = b1*c2 - b2*c1;
+    const num_y = a2*c1 - a1*c2;
+    const denom = a1*b2 - a2*b1;
+    if(denom == 0) return false;
+    // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
+    const ix = num_x / denom;
+    const iy = num_y / denom;
 
-  const on = [
-      (ix-path1.x1)*(ix-path1.x2) <= 0,
-      (ix-path2.x1)*(ix-path2.x2) <= 0,
-      (iy-path1.y1)*(iy-path1.y2) <= 0,
-      (iy-path2.y1)*(iy-path2.y2) <= 0];
-  return on.reduce((a,b)=>a&&b);
+    const on = [
+        (ix-path1.x1)*(ix-path1.x2) <= 0,
+        (ix-path2.x1)*(ix-path2.x2) <= 0,
+        (iy-path1.y1)*(iy-path1.y2) <= 0,
+        (iy-path2.y1)*(iy-path2.y2) <= 0];
+    return on.reduce((a,b)=>a&&b);
+  }).reduce((a,b)=>a||b);
 }
 	</script>
 </html>
