@@ -18,6 +18,7 @@
 
                         </svg>
 		</div>
+                <h2 id="timer">--:--.--</h2>
 
 	</body>
 	<script>
@@ -101,4 +102,32 @@ function collision(path1) {
   }).reduce((a,b)=>a||b);
 }
 	</script>
+        <script>
+const timerField = document.getElementById('timer');
+const StartTimer = function(ms) {
+  if(timerField.textContent.indexOf('0')>=0){
+    return false; // 二重起動防止（仮）
+  }
+  const limit = ms;
+  const start = Date.now();
+  const timerID = setInterval(function(){
+    const now = Date.now();
+    let rest= Math.max(0, limit - (now - start));
+    const min = Math.floor(rest/60000);
+    const sec = Math.floor((rest%60000)/1000);
+    const mls = Math.floor((rest%1000)/10);
+    timerField.textContent = 
+      ('00'+min).slice(-2) + ':' +
+      ('00'+sec).slice(-2) + '.' +
+      ('00'+mls).slice(-2);
+    if(rest == 0) {
+      alert('Time Up!');
+      clearInterval(timerID);
+      timerField.textContent = "--:--.--";
+      return;
+    }
+  }, 10);
+  return true;
+};
+        </script>
 </html>
