@@ -12,27 +12,23 @@
   left: 100px;
   top: 250px;
 }
-.anime1 {
-  animation: strokeAnimation1 linear 3s infinite;
-}
-@keyframes strokeAnimation1{
-  from{transform-origin:385px 90px; transform: rotate(0);}
-  to  {transform-origin:385px 90px; transform: rotate(-360deg);}
-}
-.rot1 { animation: rotation1 linear 3s infinite; }
-@keyframes rotation1{
-  from{transform-origin:88.8675px 80px; transform: rotate(0);}
-  to  {transform-origin:88.8675px 80px; transform: rotate(360deg);}
-}
 .rot2 { animation: rotation2 linear 3s infinite; }
 @keyframes rotation2{
   from{transform-origin:188.8675px 80px; transform: rotate(0);}
   to  {transform-origin:188.8675px 80px; transform: rotate(-360deg);}
 }
+.clockwise { --rotto:360deg; }
+.anticlockwise { --rotto:-360deg; }
 .rot { animation: varrot linear 3s infinite; }
 @keyframes varrot{
   from{transform-origin:var(--cx) var(--cy); transform: rotate(0);}
-  to  {transform-origin:var(--cx) var(--cy); transform: rotate(-360deg);}
+  to  {transform-origin:var(--cx) var(--cy); transform: rotate(var(--rotto));}
+}
+.vPiston { animation: varVPiston linear 1s infinite; }
+@keyframes varVPiston{
+    0%{transform: translateY(0);}
+   50%{transform: translateY(var(--h));}
+  100%{transform: translateY(0);}
 }
 </style>
         </header>
@@ -43,7 +39,7 @@
 
   <!-- 第一の三角形 -->
   <path d="M 60 30 l 0 100 l 86.6 -50 l -86.6 -50"
-        class="rot1"/>
+        class="rot clockwise" style="--cx:88.8675px; --cy:80px;"/>
   <!-- 第二の三角形（何となくルーローにしてみた）
   <path d="M 160  30 a 100 100 0 0 1 86.6  50" class="rot2"/>
   <path d="M 160  30 a 100 100 0 0 0    0 100" class="rot2"/>
@@ -51,15 +47,44 @@
   <path d="M 160 30 a 100 100 0 0 1  86.6  50
                     a 100 100 0 0 1 -86.6  50
                     a 100 100 0 0 1   0  -100"
-        class="rot"
-        style="--cx: 188.8675px; --cy: 80px"/>
+        class="rot anticlockwise"
+        style="--cx: 188.8675px; --cy: 80px;"/>
 
-  <rect x="380" y="10" width="10" height="140"
-        stroke="#333333" fill="black" id="rot1" class="anime1"></rect>
+  <rect x="380" y="10" width="40" height="140" fill="black"
+        class="rot anticlockwise"
+        style="--cx:400px;--cy:80px;"></rect>
+  <path d="M 500 0 V 20 h 70 V 140 h  30 V 0 z" class="static"/>
+  <path d="M 500     40 h 50 V 160 h -50 z" class="static"/>
+  <path d="M 620     30 h 40 V 160 h -40 z" class="static"/>
+  <path d="M 690 0           V 120 h  40 V 0 z" class="static"/>
+
+  <path d="M 760 -30 V 50 h 40 V -80 z"
+        class="vPiston" style="--h:30px"/>
+  <path d="M 760 160 V 90 h 40 V 160 z"/>
+
+  <path d="M895 75
+           h -35 v  10
+           h  35 v  35
+           h  10 v -35
+           h  35 v -10
+           h -35 v -35
+           h -10 z"
+        class="rot anticlockwise"
+        style="--cx:900px; --cy:80px;"/>
+  <path d="M830 0
+           v 90 h 20
+           A 50 50 0 0 1 940 45
+           h 40 V 0 z"
+        class="static"/>
+
+
 
 			</svg>
 		</div>
-                <h2 id="timer">--:--.--</h2>
+		<h2>
+			<span id="timer">--:--.--</span>
+			<span onclick="StartTimer(10000);">/10sec(sample)</span>
+		</h2>
 		<div id="LockButton"></div>
 
 	</body>
@@ -156,7 +181,7 @@ const StartTimer = function(ms) {
   const start = Date.now();
   const timerID = setInterval(function(){
     // タイマー反復処理
-    svg.style.left = (Number(svg.style.left.replace('px',''))-1)+"px";
+    svg.style.left = (Number(svg.style.left.replace('px',''))-0.2)+"px";
     const now = Date.now();
     let rest= Math.max(0, limit - (now - start));
     const min = Math.floor(rest/60000);
@@ -167,6 +192,7 @@ const StartTimer = function(ms) {
       ('00'+sec).slice(-2) + '.' +
       ('00'+mls).slice(-2);
     if(rest == 0) {
+      timerField.textContent = "00:00.00";
       alert('Time Up!');
       clearInterval(timerID);
       timerField.textContent = "--:--.--";
