@@ -48,11 +48,6 @@ function move(dx, dy) {
   cursor_y += dy;
   cursor.setAttribute('cx', cursor_x);
   cursor.setAttribute('cy', cursor_y);
-  if(collision({x1:old_x, y1:old_y, x2:cursor_x, y2:cursor_y})) {
-    cursor.setAttribute('fill', "#F00");
-  }else{
-    cursor.setAttribute('fill', "#ED3");
-  }
 };
 
 // 障害物
@@ -61,9 +56,9 @@ const walls = [
   {type:"L", x1: 60, y1:130, x2:147, y2: 80, rot: {cx: 88.8675, cy:80, x1: 60, y1:130, x2:147, y2: 80, a:0.01, i:0} },
   {type:"L", x1:147, y1: 80, x2: 60, y2: 30, rot: {cx: 88.8675, cy:80, x1:147, y1: 80, x2: 60, y2: 30, a:0.01, i:0} },
   {type:"z"},
-  {type:"L", x1:160, y1: 30, x2:160, y2:130, rot: {cx:188.8675, cy:80, x1:160, y1: 30, x2:160, y2:130, a:0.01, i:0} },
-  {type:"L", x1:160, y1:130, x2:247, y2: 80, rot: {cx:188.8675, cy:80, x1:160, y1:130, x2:247, y2: 80, a:0.01, i:0} },
-  {type:"L", x1:247, y1: 80, x2:160, y2: 30, rot: {cx:188.8675, cy:80, x1:247, y1: 80, x2:160, y2: 30, a:0.01, i:0} },
+  {type:"L", x1:160, y1: 30, x2:160, y2:130, rot: {cx:188.8675, cy:80, x1:160, y1: 30, x2:160, y2:130, a:-0.01, i:0} },
+  {type:"L", x1:160, y1:130, x2:247, y2: 80, rot: {cx:188.8675, cy:80, x1:160, y1:130, x2:247, y2: 80, a:-0.01, i:0} },
+  {type:"L", x1:247, y1: 80, x2:160, y2: 30, rot: {cx:188.8675, cy:80, x1:247, y1: 80, x2:160, y2: 30, a:-0.01, i:0} },
   {type:"z"},
 ];
 
@@ -124,38 +119,32 @@ document.body.addEventListener('keydown',event=>{
 });
 
 // 当たり判定
-function collision(p) {
-  // https://qiita.com/tydesign/items/4d3909a826363d8fc29f
-  //const w = {x1:200, y1:20, x2:130, y2:140};
+function collision() {
   return walls.map(w=>{
 
     if(w.type=="L") {
-      // 直線方程式１
-      const a1 = p.y2 - p.y1;
-      const b1 = p.x1 - p.x2;
-      const c1 = p.x2*p.y1 - p.x1*p.y2;
-      // 直線方程式２
-      const a2 = w.y2 - w.y1;
-      const b2 = w.x1 - w.x2;
-      const c2 = w.x2*w.y1 - w.x1*w.y2;
-
-      // 交点を求める
-      // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
-      const num_x = b1*c2 - b2*c1;
-      const num_y = a2*c1 - a1*c2;
-      const denom = a1*b2 - a2*b1;
-      if(denom == 0) return false;
-      // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
-      const ix = num_x / denom;
-      const iy = num_y / denom;
-
-      // その交点が線分内にあるか判定
-      const on = [
-          (ix-p.x1)*(ix-p.x2) <= 0,
-          (ix-w.x1)*(ix-w.x2) <= 0,
-          (iy-p.y1)*(iy-p.y2) <= 0,
-          (iy-w.y1)*(iy-w.y2) <= 0];
-      return on.reduce((a,b)=>a&&b);
+      // https://yttm-work.jp/collision/collision_0006.html
+      // 高校数学かなり忘れてて悲しくなった。
+      const wx = w.x2 - w.x1;
+      const wy = w.y2 - w.y1;
+      const ux = cursor_x - w.x1;
+      const uy = cursor_y - w.y1;
+      const vx = cursor_x - w.x2;
+      const vy = cursor_y - w.y2;
+      const det = wx * uy - wy * ux;
+      const len = Math.sqrt( wx*wx + wy*wy );
+      const dst =  Math.abs(det) / len;
+      if(dst > cursor_r) {
+        return false; // 直線と中心の法線距離が十分遠ければ、触れていない
+      }
+      const dot1 = wx * ux + wy * uy;
+      const dot2 = wx * vx + wy * vy;
+      if(dot1*dot2 < 0) {
+        return true; // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる＝線分と円は触れている
+      }
+      const v = Math.sqrt( vx*vx + vy*vy );
+      // あとは、線分の終点が円内にあるかないかで決定する
+      return (v <= cursor_r);
     }
 
     // なんでもない＝衝突してない
@@ -177,6 +166,11 @@ const StartTimer = function(ms) {
     function(){
       rotations();
       resetSVG();
+      if(collision()){
+        cursor.setAttribute('fill', 'red');
+      }else{
+        cursor.setAttribute('fill', 'yellow');
+      }
     } :
     function(){
       //{{{#section: 次元性の時の処理
