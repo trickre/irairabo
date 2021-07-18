@@ -1,6 +1,9 @@
 <html>
 	<header>
 <style type="text/css">
+#svg {
+  background-color: #c0ffee;
+}
 .anime1 {
   animation: strokeAnimation1 linear 3s infinite;
 }
@@ -14,7 +17,6 @@
 		<h1>イライラゲーム棒</h1>
 		<div>
 			<svg id="svg" width="290" height="160">
- <rect x="180" y="10" width="10" height="170" stroke="#333333" fill="black" id="rot1" class="anime1"></rect>
 
                         </svg>
 		</div>
@@ -25,42 +27,93 @@
 const NS = "http://www.w3.org/2000/svg";
 const svg = document.getElementById('svg');
 // 自機（カーソル）
-const cursor = document.createElementNS(NS, 'circle');
-cursor.setAttribute('cx', 30);
-cursor.setAttribute('cy', 50);
-cursor.setAttribute('r', 10);
-cursor.setAttribute('fill', "#ED3");
-const move = function(dx, dy) {
-  const x = Number(cursor.getAttribute('cx'));
-  const y = Number(cursor.getAttribute('cy'));
-  cursor.setAttribute('cx', x+dx);
-  cursor.setAttribute('cy', y+dy);
-  if(collision({x1:x, y1:y, x2:x+dx, y2:y+dy})) {
+let cursor_x = 30;
+let cursor_y = 50;
+const cursor_r = 10;
+const cursor = (function () {
+  const cursor = document.createElementNS(NS, 'circle');
+  cursor.setAttribute('cx', cursor_x);
+  cursor.setAttribute('cy', cursor_y);
+  cursor.setAttribute('r', cursor_r);
+  cursor.setAttribute('fill', "#ED3");
+  cursor.setAttribute('id', 'cursor');
+  svg.appendChild(cursor);
+  return cursor
+})();
+
+function move(dx, dy) {
+  const old_x = cursor_x;
+  const old_y = cursor_y;
+  cursor_x += dx;
+  cursor_y += dy;
+  cursor.setAttribute('cx', cursor_x);
+  cursor.setAttribute('cy', cursor_y);
+  if(collision({x1:old_x, y1:old_y, x2:cursor_x, y2:cursor_y})) {
     cursor.setAttribute('fill', "#F00");
   }else{
     cursor.setAttribute('fill', "#ED3");
   }
 };
-svg.appendChild(cursor);
+
 // 障害物
-const barrier = document.createElementNS(NS, 'path');
-barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z');
-//barrier.setAttribute('fill', '');
-barrier.setAttribute('stroke', 'black');
-svg.appendChild(barrier);
-barrier.addEventListener('mouseover', event=>{
-  event.target.setAttribute('fill','red');
-});
-barrier.addEventListener('mouseout', event=>{
-  event.target.setAttribute('fill','black');
-});
-const rot1 = document.getElementById('rot1');
-rot1.addEventListener('mouseover', event=>{
-  event.target.setAttribute('fill','red');
-});
-rot1.addEventListener('mouseout', event=>{
-  event.target.setAttribute('fill','black');
-});
+const walls = [
+  {type:"L", x1: 60, y1: 30, x2: 60, y2:130, rot: {cx: 88.8675, cy:80, x1: 60, y1: 30, x2: 60, y2:130, a:0.01, i:0} },
+  {type:"L", x1: 60, y1:130, x2:147, y2: 80, rot: {cx: 88.8675, cy:80, x1: 60, y1:130, x2:147, y2: 80, a:0.01, i:0} },
+  {type:"L", x1:147, y1: 80, x2: 60, y2: 30, rot: {cx: 88.8675, cy:80, x1:147, y1: 80, x2: 60, y2: 30, a:0.01, i:0} },
+  {type:"z"},
+  {type:"L", x1:160, y1: 30, x2:160, y2:130, rot: {cx:188.8675, cy:80, x1:160, y1: 30, x2:160, y2:130, a:0.01, i:0} },
+  {type:"L", x1:160, y1:130, x2:247, y2: 80, rot: {cx:188.8675, cy:80, x1:160, y1:130, x2:247, y2: 80, a:0.01, i:0} },
+  {type:"L", x1:247, y1: 80, x2:160, y2: 30, rot: {cx:188.8675, cy:80, x1:247, y1: 80, x2:160, y2: 30, a:0.01, i:0} },
+  {type:"z"},
+];
+
+// SVG生成
+function resetSVG() {
+  // 冒頭がカーソルであることを前提にしている
+  /* https://freefielder.jp/blog/2015/09/javascript-remove-childnodes.html */
+  while(svg.childElementCount>=2) {
+    svg.removeChild(svg.lastChild);
+  }
+  let d = "M";
+  let last = {x:0, y:0};
+  for(let i=0;i<walls.length;i++) {
+    const w = walls[i];
+    if(w.type=="L") {
+      if(d=="M") d = d + w.x1 + " " + w.y1 + " ";
+      d = d + "L" + w.x2 + " " + w.y2 + " ";
+    }
+    // pathを閉じる
+    if(w.type=="z") {
+      d = d + "z";
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('stroke', 'black');
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+      d = "M";
+    }
+  }
+}
+
+resetSVG();
+//const barrier = document.createElementNS(NS, 'path');
+//barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z');
+////barrier.setAttribute('fill', '');
+//barrier.setAttribute('stroke', 'black');
+//svg.appendChild(barrier);
+//barrier.addEventListener('mouseover', event=>{
+//  event.target.setAttribute('fill','red');
+//});
+//barrier.addEventListener('mouseout', event=>{
+//  event.target.setAttribute('fill','black');
+//});
+//const rot1 = document.getElementById('rot1');
+//rot1.addEventListener('mouseover', event=>{
+//  event.target.setAttribute('fill','red');
+//});
+//rot1.addEventListener('mouseout', event=>{
+//  event.target.setAttribute('fill','black');
+//});
 
 // 入力判定
 document.body.addEventListener('keydown',event=>{
@@ -69,36 +122,45 @@ document.body.addEventListener('keydown',event=>{
   if(event.key==='w') { move(0, -10); }
   if(event.key==='s') { move(0, +10); }
 });
-// 当たり判定
-function collision(path1) {
-  // https://qiita.com/tydesign/items/4d3909a826363d8fc29f
-  //const path2 = {x1:200, y1:20, x2:130, y2:140};
-  return [
-  {x1:200, y1: 20, x2:130, y2:140},
-  {x1:130, y1:140, x2:280, y2:140},
-  {x1:280, y1:140, x2:280, y2:100},
-  ].map(path2=>{
-    const a1 = path1.y2 - path1.y1;
-    const b1 = path1.x1 - path1.x2;
-    const c1 = path1.x2*path1.y1 - path1.x1*path1.y2;
-    const a2 = path2.y2 - path2.y1;
-    const b2 = path2.x1 - path2.x2;
-    const c2 = path2.x2*path2.y1 - path2.x1*path2.y2;
-    // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
-    const num_x = b1*c2 - b2*c1;
-    const num_y = a2*c1 - a1*c2;
-    const denom = a1*b2 - a2*b1;
-    if(denom == 0) return false;
-    // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
-    const ix = num_x / denom;
-    const iy = num_y / denom;
 
-    const on = [
-        (ix-path1.x1)*(ix-path1.x2) <= 0,
-        (ix-path2.x1)*(ix-path2.x2) <= 0,
-        (iy-path1.y1)*(iy-path1.y2) <= 0,
-        (iy-path2.y1)*(iy-path2.y2) <= 0];
-    return on.reduce((a,b)=>a&&b);
+// 当たり判定
+function collision(p) {
+  // https://qiita.com/tydesign/items/4d3909a826363d8fc29f
+  //const w = {x1:200, y1:20, x2:130, y2:140};
+  return walls.map(w=>{
+
+    if(w.type=="L") {
+      // 直線方程式１
+      const a1 = p.y2 - p.y1;
+      const b1 = p.x1 - p.x2;
+      const c1 = p.x2*p.y1 - p.x1*p.y2;
+      // 直線方程式２
+      const a2 = w.y2 - w.y1;
+      const b2 = w.x1 - w.x2;
+      const c2 = w.x2*w.y1 - w.x1*w.y2;
+
+      // 交点を求める
+      // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
+      const num_x = b1*c2 - b2*c1;
+      const num_y = a2*c1 - a1*c2;
+      const denom = a1*b2 - a2*b1;
+      if(denom == 0) return false;
+      // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
+      const ix = num_x / denom;
+      const iy = num_y / denom;
+
+      // その交点が線分内にあるか判定
+      const on = [
+          (ix-p.x1)*(ix-p.x2) <= 0,
+          (ix-w.x1)*(ix-w.x2) <= 0,
+          (iy-p.y1)*(iy-p.y2) <= 0,
+          (iy-w.y1)*(iy-w.y2) <= 0];
+      return on.reduce((a,b)=>a&&b);
+    }
+
+    // なんでもない＝衝突してない
+    return false;
+
   }).reduce((a,b)=>a||b);
 }
 	</script>
@@ -110,24 +172,45 @@ const StartTimer = function(ms) {
   }
   const limit = ms;
   const start = Date.now();
-  const timerID = setInterval(function(){
-    const now = Date.now();
-    let rest= Math.max(0, limit - (now - start));
-    const min = Math.floor(rest/60000);
-    const sec = Math.floor((rest%60000)/1000);
-    const mls = Math.floor((rest%1000)/10);
-    timerField.textContent = 
-      ('00'+min).slice(-2) + ':' +
-      ('00'+sec).slice(-2) + '.' +
-      ('00'+mls).slice(-2);
-    if(rest == 0) {
-      alert('Time Up!');
-      clearInterval(timerID);
-      timerField.textContent = "--:--.--";
-      return;
-    }
+  const timerID = setInterval(
+    limit=="inf" ?
+    function(){
+      rotations();
+      resetSVG();
+    } :
+    function(){
+      //{{{#section: 次元性の時の処理
+      const now = Date.now();
+      let rest= Math.max(0, limit - (now - start));
+      const min = Math.floor(rest/60000);
+      const sec = Math.floor((rest%60000)/1000);
+      const mls = Math.floor((rest%1000)/10);
+      timerField.textContent = 
+        ('00'+min).slice(-2) + ':' +
+        ('00'+sec).slice(-2) + '.' +
+        ('00'+mls).slice(-2);
+      if(rest == 0) {
+        alert('Time Up!');
+        clearInterval(timerID);
+        timerField.textContent = "--:--.--";
+        return;
+      }
+      //}}}#section
+      // 共通処理
   }, 10);
   return true;
 };
+
+// 回転アニメーションのコマ処理
+function rotations() {
+  walls.filter(w=>w.rot!=undefined).forEach(function(w){
+    w.rot.i++;
+    const th = w.rot.a * w.rot.i;
+    w.x1 = (w.rot.x1-w.rot.cx) * Math.cos(th) - (w.rot.y1-w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y1 = (w.rot.x1-w.rot.cx) * Math.sin(th) + (w.rot.y1-w.rot.cy) * Math.cos(th) + w.rot.cy;
+    w.x2 = (w.rot.x2-w.rot.cx) * Math.cos(th) - (w.rot.y2-w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y2 = (w.rot.x2-w.rot.cx) * Math.sin(th) + (w.rot.y2-w.rot.cy) * Math.cos(th) + w.rot.cy;
+  });
+}
         </script>
 </html>
