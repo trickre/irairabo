@@ -4,6 +4,7 @@
 <style type="text/css">
 #svg {
   background-color: #c0ffee;
+
 }
 #LockButton {
   background-color: #ffee00;
@@ -93,6 +94,7 @@
 const NS = "http://www.w3.org/2000/svg";
 const svg = document.getElementById('svg');
 // 自機（カーソル）
+
 const cursor = document.createElementNS(NS, 'circle');
 cursor.setAttribute('id', 'ME');
 cursor.setAttribute('cx', 30);
@@ -139,36 +141,39 @@ document.body.addEventListener('keydown',event=>{
   if(event.key==='w') { move(0, -10); }
   if(event.key==='s') { move(0, +10); }
 });
-// 当たり判定
-function collision(path1) {
-  // https://qiita.com/tydesign/items/4d3909a826363d8fc29f
-  //const path2 = {x1:200, y1:20, x2:130, y2:140};
-  return [
-  {x1:200, y1: 20, x2:130, y2:140},
-  {x1:130, y1:140, x2:280, y2:140},
-  {x1:280, y1:140, x2:280, y2:100},
-  ].map(path2=>{
-    const a1 = path1.y2 - path1.y1;
-    const b1 = path1.x1 - path1.x2;
-    const c1 = path1.x2*path1.y1 - path1.x1*path1.y2;
-    const a2 = path2.y2 - path2.y1;
-    const b2 = path2.x1 - path2.x2;
-    const c2 = path2.x2*path2.y1 - path2.x1*path2.y2;
-    // https://qiita.com/tydesign/items/feda4c0dd48ea269bb14
-    const num_x = b1*c2 - b2*c1;
-    const num_y = a2*c1 - a1*c2;
-    const denom = a1*b2 - a2*b1;
-    if(denom == 0) return false;
-    // https://en.wikipedia.org/wiki/Intersection_(Euclidean_geometry)
-    const ix = num_x / denom;
-    const iy = num_y / denom;
 
-    const on = [
-        (ix-path1.x1)*(ix-path1.x2) <= 0,
-        (ix-path2.x1)*(ix-path2.x2) <= 0,
-        (iy-path1.y1)*(iy-path1.y2) <= 0,
-        (iy-path2.y1)*(iy-path2.y2) <= 0];
-    return on.reduce((a,b)=>a&&b);
+// 当たり判定
+function collision() {
+  return walls.map(w=>{
+
+    if(w.type=="L") {
+      // https://yttm-work.jp/collision/collision_0006.html
+      // 高校数学かなり忘れてて悲しくなった。
+      const wx = w.x2 - w.x1;
+      const wy = w.y2 - w.y1;
+      const ux = cursor_x - w.x1;
+      const uy = cursor_y - w.y1;
+      const vx = cursor_x - w.x2;
+      const vy = cursor_y - w.y2;
+      const det = wx * uy - wy * ux;
+      const len = Math.sqrt( wx*wx + wy*wy );
+      const dst =  Math.abs(det) / len;
+      if(dst > cursor_r) {
+        return false; // 直線と中心の法線距離が十分遠ければ、触れていない
+      }
+      const dot1 = wx * ux + wy * uy;
+      const dot2 = wx * vx + wy * vy;
+      if(dot1*dot2 < 0) {
+        return true; // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる＝線分と円は触れている
+      }
+      const v = Math.sqrt( vx*vx + vy*vy );
+      // あとは、線分の終点が円内にあるかないかで決定する
+      return (v <= cursor_r);
+    }
+
+    // なんでもない＝衝突してない
+    return false;
+
   }).reduce((a,b)=>a||b);
 }
 	</script>
@@ -180,6 +185,7 @@ const StartTimer = function(ms) {
   }
   const limit = ms;
   const start = Date.now();
+
   const timerID = setInterval(function(){
     // タイマー反復処理
     svg.style.left = (Number(svg.style.left.replace('px',''))-0.2)+"px";
@@ -199,9 +205,22 @@ const StartTimer = function(ms) {
       timerField.textContent = "--:--.--";
       return;
     }
+
   }, 10);
   return true;
 };
+
+// 回転アニメーションのコマ処理
+function rotations() {
+  walls.filter(w=>w.rot!=undefined).forEach(function(w){
+    w.rot.i++;
+    const th = w.rot.a * w.rot.i;
+    w.x1 = (w.rot.x1-w.rot.cx) * Math.cos(th) - (w.rot.y1-w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y1 = (w.rot.x1-w.rot.cx) * Math.sin(th) + (w.rot.y1-w.rot.cy) * Math.cos(th) + w.rot.cy;
+    w.x2 = (w.rot.x2-w.rot.cx) * Math.cos(th) - (w.rot.y2-w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y2 = (w.rot.x2-w.rot.cx) * Math.sin(th) + (w.rot.y2-w.rot.cy) * Math.cos(th) + w.rot.cy;
+  });
+}
         </script>
         <script>
 function pointerLock(elem){
