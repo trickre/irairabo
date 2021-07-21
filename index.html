@@ -71,33 +71,55 @@ const walls = [
   {type:"L", x1:247, y1: 80, x2:160, y2: 30, rot: {cx:188.8675, cy:80, x1:247, y1: 80, x2:160, y2: 30, a:-0.01, i:0} },
   {type:"z"},
 ];
-// SVG生成
-function resetSVG() {
-// 冒頭がカーソルであることを前提にしている
-/* https://freefielder.jp/blog/2015/09/javascript-remove-childnodes.html */
-while(svg.childElementCount>=2) {
-svg.removeChild(svg.lastChild);
-}
-let d = "M";
-let last = {x:0, y:0};
-for(let i=0;i<walls.length;i++) { const w=walls[i]; if(w.type=="L" ) { if(d=="M" ) d=d + w.x1 + " " + w.y1 + " " ; d=d
-  + "L" + w.x2 + " " + w.y2 + " " ; } // pathを閉じる if(w.type=="z" ) { d=d + "z" ; const
-  path=document.createElementNS(NS, 'path' ); path.setAttribute('d', d); path.setAttribute('stroke', 'black' );
-  path.setAttribute('fill', 'none' ); svg.appendChild(path); d="M" ; } } } resetSVG(); //const
-  barrier=document.createElementNS(NS, 'path' ); //barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z'
-  ); ////barrier.setAttribute('fill', '' ); //barrier.setAttribute('stroke', 'black'
-  ); //svg.appendChild(barrier); //barrier.addEventListener('mouseover', event=>{
-  // event.target.setAttribute('fill','red');
+  // SVG生成
+  function resetSVG() {
+    // 冒頭がカーソルであることを前提にしている
+    /* https://freefielder.jp/blog/2015/09/javascript-remove-childnodes.html */
+    while (svg.childElementCount >= 2) {
+      svg.removeChild(svg.lastChild);
+    }
+    let d = "M";
+    let last = {
+      x: 0,
+      y: 0
+    };
+    for (let i = 0; i < walls.length; i++) {
+      const w = walls[i];
+      if (w.type == "L") {
+        if (d == "M") d = d + w.x1 + " " + w.y1 + " ";
+        d = d + "L" + w.x2 + " " + w.y2 + " ";
+      }
+      // pathを閉じる
+      if (w.type == "z") {
+        d = d + "z";
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', 'black');
+        path.setAttribute('fill', 'none');
+        svg.appendChild(path);
+        d = "M";
+      }
+    }
+  }
+
+  resetSVG();
+  //const barrier = document.createElementNS(NS, 'path');
+  //barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z');
+  ////barrier.setAttribute('fill', '');
+  //barrier.setAttribute('stroke', 'black');
+  //svg.appendChild(barrier);
+  //barrier.addEventListener('mouseover', event=>{
+  //  event.target.setAttribute('fill','red');
   //});
   //barrier.addEventListener('mouseout', event=>{
-  // event.target.setAttribute('fill','black');
+  //  event.target.setAttribute('fill','black');
   //});
   //const rot1 = document.getElementById('rot1');
   //rot1.addEventListener('mouseover', event=>{
-  // event.target.setAttribute('fill','red');
+  //  event.target.setAttribute('fill','red');
   //});
   //rot1.addEventListener('mouseout', event=>{
-  // event.target.setAttribute('fill','black');
+  //  event.target.setAttribute('fill','black');
   //});
 
   // 入力判定
@@ -129,31 +151,40 @@ for(let i=0;i<walls.length;i++) { const w=walls[i]; if(w.type=="L" ) { if(d=="M"
   }
   const dot1 = wx * ux + wy * uy;
   const dot2 = wx * vx + wy * vy;
-  if(dot1*dot2 < 0) { return true; // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる＝線分と円は触れている } const v=Math.sqrt( vx*vx + vy*vy
-    ); // あとは、線分の終点が円内にあるかないかで決定する return (v <=cursor_r); } // なんでもない＝衝突してない return false; }).reduce((a,b)=>a||b);
+  if(dot1*dot2 < 0) {
+        return true; // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる＝線分と円は触れている
+      }
+      const v = Math.sqrt( vx*vx + vy*vy );
+      // あとは、線分の終点が円内にあるかないかで決定する
+      return (v <= cursor_r);
     }
-    </script>
-    <script>
-      const timerField = document.getElementById('timer');
-      const StartTimer = function (ms) {
-        if (timerField.textContent.indexOf('0') >= 0) {
-          return false; // 二重起動防止（仮）
-        }
-        const limit = ms;
-        const start = Date.now();
-        const timerID = setInterval(
-          limit == "inf" ?
-          function () {
-            rotations();
-            resetSVG();
-            if (collision()) {
-              cursor.setAttribute('fill', 'red');
-            } else {
-              cursor.setAttribute('fill', 'yellow');
-            }
-          } :
-          function () {
-            //{{{#section: 次元性の時の処理
+
+    // なんでもない＝衝突してない
+    return false;
+
+  }).reduce((a,b)=>a||b);
+}
+    
+    const timerField = document.getElementById('timer');
+    const StartTimer = function (ms) {
+    if (timerField.textContent.indexOf('0') >= 0) {
+    return false; // 二重起動防止（仮）
+    }
+    const limit = ms;
+    const start = Date.now();
+    const timerID = setInterval(
+    limit == "inf" ?
+    function () {
+    rotations();
+    resetSVG();
+    if (collision()) {
+    cursor.setAttribute('fill', 'red');
+    } else {
+    cursor.setAttribute('fill', 'yellow');
+    }
+    } :
+    function () {
+    //{{{#section: 次元性の時の処理
             const now = Date.now();
             let rest = Math.max(0, limit - (now - start));
             const min = Math.floor(rest / 60000);
@@ -170,22 +201,22 @@ for(let i=0;i<walls.length;i++) { const w=walls[i]; if(w.type=="L" ) { if(d=="M"
               return;
             }
             //}}}#section
-            // 共通処理
-          }, 10);
-        return true;
-      };
+    // 共通処理
+    }, 10);
+    return true;
+    };
 
-      // 回転アニメーションのコマ処理
-      function rotations() {
-        walls.filter(w => w.rot != undefined).forEach(function (w) {
-          w.rot.i++;
-          const th = w.rot.a * w.rot.i;
-          w.x1 = (w.rot.x1 - w.rot.cx) * Math.cos(th) - (w.rot.y1 - w.rot.cy) * Math.sin(th) + w.rot.cx;
-          w.y1 = (w.rot.x1 - w.rot.cx) * Math.sin(th) + (w.rot.y1 - w.rot.cy) * Math.cos(th) + w.rot.cy;
-          w.x2 = (w.rot.x2 - w.rot.cx) * Math.cos(th) - (w.rot.y2 - w.rot.cy) * Math.sin(th) + w.rot.cx;
-          w.y2 = (w.rot.x2 - w.rot.cx) * Math.sin(th) + (w.rot.y2 - w.rot.cy) * Math.cos(th) + w.rot.cy;
-        });
-      }
+    // 回転アニメーションのコマ処理
+    function rotations() {
+    walls.filter(w => w.rot != undefined).forEach(function (w) {
+    w.rot.i++;
+    const th = w.rot.a * w.rot.i;
+    w.x1 = (w.rot.x1 - w.rot.cx) * Math.cos(th) - (w.rot.y1 - w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y1 = (w.rot.x1 - w.rot.cx) * Math.sin(th) + (w.rot.y1 - w.rot.cy) * Math.cos(th) + w.rot.cy;
+    w.x2 = (w.rot.x2 - w.rot.cx) * Math.cos(th) - (w.rot.y2 - w.rot.cy) * Math.sin(th) + w.rot.cx;
+    w.y2 = (w.rot.x2 - w.rot.cx) * Math.sin(th) + (w.rot.y2 - w.rot.cy) * Math.cos(th) + w.rot.cy;
+    });
+    }
     </script>
 
     </html>
