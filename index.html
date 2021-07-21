@@ -173,6 +173,7 @@ const walls = [
     }
     const limit = ms;
     const start = Date.now();
+    /* アニメーション処理 */
     const timerID = setInterval(
     limit == "inf" ?
     function () {
@@ -203,7 +204,8 @@ const walls = [
             }
             //}}}#section
     // 共通処理
-    }, 10);
+    move(1,0);
+    }, 25);
     return true;
     };
 
