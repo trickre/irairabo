@@ -22,7 +22,7 @@
 	<body>
 		<h1></h1>
 		<div>
-			<svg id="svg" width="500" height="300" viewBox="-100 -100 500 300">
+			<svg id="svg" width="1290" height="160">
 
                         </svg>
 		</div>
@@ -92,11 +92,6 @@ function createArc(x0, y0, r, ap, aq, cx=0, cy=0, a=0, init=0) {
   const y1 = y0 + r * Math.sin(ap*DEG1);
   const x2 = x0 + r * Math.cos(aq*DEG1);
   const y2 = y0 + r * Math.sin(aq*DEG1);
-  console.log(">>>",
-    Math.round(x1*10000)/10000,
-    Math.round(y1*10000)/10000,
-    Math.round(x2*10000)/10000,
-    Math.round(y2*10000)/10000);
   return {
     type: "A", x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0: y0, r: r, rot: { cx: cx, cy: cy,
                x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0, y0, a: a, i: init }
@@ -105,15 +100,73 @@ function createArc(x0, y0, r, ap, aq, cx=0, cy=0, a=0, init=0) {
 
 // 障害物
 const walls = [
-//  createLine( 60, 30, 60,130, 88.8675, 80, 1),
-//  createLine( 60,130,147, 80, 88.8675, 80, 1),
-//  createLine(147, 80, 60, 30, 88.8675, 80, 1),
-//  {type: "z"},
+  //          x1, y1, x2, y2,      cx, cy, a
+  createLine( 60, 30, 60,130, 88.8675, 80, 1),
+  createLine( 60,130,147, 80, 88.8675, 80, 1),
+  createLine(147, 80, 60, 30, 88.8675, 80, 1),
+  {type: "z"},
   //         x0, y0,   r,  ap,     aq,       cx, cy,  a
   createArc(247, 80, 100, 150, 150+60, 188.8675, 80, -1),
   createArc(160,130, 100, 270, 270+60, 188.8675, 80, -1),
   createArc(160, 30, 100,  30,  30+60, 188.8675, 80, -1),
   {type: "z"},
+
+  createLine( 380,  10, 420,  10, 400, 80, 1.2),
+  createLine( 420,  10, 420, 150, 400, 80, 1.2),
+  createLine( 420, 150, 380, 150, 400, 80, 1.2),
+  createLine( 380, 150, 380,  10, 400, 80, 1.2),
+  {type: "z"},
+
+  createLine( 500, -10, 500,  20),
+  createLine( 500,  20, 570,  20),
+  createLine( 570,  20, 570, 130),
+  createLine( 570, 130, 600, 130),
+  createLine( 600, 130, 600, -10),
+  {type: "z"},
+  createLine( 500, 180, 500,  60),
+  createLine( 500,  60, 540,  60),
+  createLine( 540,  60, 540, 180),
+  {type: "z"},
+  createLine( 620, 180, 620,  25),
+  createLine( 620,  25, 660,  25),
+  createLine( 660,  25, 660, 180),
+  {type: "z"},
+  createLine( 680, -20, 680, 125),
+  createLine( 680, 125, 700, 125),
+  createLine( 700, 125, 700, -10),
+  {type: "z"},
+  // ここに上下運動のプレス機を実装
+  createLine( 740, 170, 740,  70),
+  createLine( 740,  70, 780,  70),
+  createLine( 780,  70, 780, 170),
+  {type: "z"},
+  createLine( 820, -10, 820,  80.41889),
+  createLine( 820, 80.41889, 840.9115348, 80.41889),
+  //M840.9115348192676 80.41889066001582 A60 60 0 0 1 938.5672565811924 24.037333412861315 z
+  // コツ：先に円弧だけ作成して、F12でDOMから実際の座標↑を取り出すのが手計算いらずで楽。
+  createArc( 900, 70, 60, 170, 310),// x0, y0, r, ap, aq
+  createLine( 938.56726, 24.03733, 980, 24.03733),
+  createLine( 980, 24.03733, 980, -10),
+  {type: "z"},
+  //           x1,  y1,  x2,  y2,  cx,  cy,   a
+  createLine( 900-50, 70- 5, 900+50, 70- 5, 900,  70, -0.4),
+  createLine( 900+50, 70- 5, 900+50, 70+ 5, 900,  70, -0.4),
+  createLine( 900+50, 70+ 5, 900-50, 70+ 5, 900,  70, -0.4),
+  createLine( 900-50, 70+ 5, 900-50, 70- 5, 900,  70, -0.4),
+  {type: "z"},
+  createLine( 900- 5, 70-50, 900+ 5, 70-50, 900,  70, -0.4),
+  createLine( 900+ 5, 70-50, 900+ 5, 70+50, 900,  70, -0.4),
+  createLine( 900+ 5, 70+50, 900- 5, 70+50, 900,  70, -0.4),
+  createLine( 900- 5, 70+50, 900- 5, 70-50, 900,  70, -0.4),
+  {type: "z"},
+  createLine( 980, 170, 980, 40),
+  createLine( 980,  40, 951.96152, 40),
+  //M951.9615242270663 40 A60 60 0 0 1 854.0373334128614 108.56725658119237 z
+  createArc(900, 70, 60, -30, 140),
+  createLine(854.03733, 108.55626, 820, 108.55626),
+  createLine(820, 108.55626, 820, 180),
+  {type: "z"},
+
 ];
 
 // SVG生成
@@ -147,14 +200,14 @@ function resetSVG() {
       d = "M";
     }
   }
-  //test
-  const c = document.createElementNS(NS, 'circle');
-  c.setAttribute('cx', 247);
-  c.setAttribute('cy', 80);
-  c.setAttribute('r', 99);
-  c.setAttribute('stroke', "#FF9900");
-  c.setAttribute('fill', "none");
-  svg.appendChild(c);
+  //test用もしくは模様
+  //const c = document.createElementNS(NS, 'circle');
+  //c.setAttribute('cx', 247);
+  //c.setAttribute('cy', 80);
+  //c.setAttribute('r', 99);
+  //c.setAttribute('stroke', "#FF9900");
+  //c.setAttribute('fill', "none");
+  //svg.appendChild(c);
 }
 
 resetSVG();
@@ -207,16 +260,11 @@ function collision() {
         // 全円には接している。
 
         const a1 = Math.atan2((w.y1    -w.y0),(w.x1    -w.x0));
-        let ac = Math.atan2((cursor_y-w.y0),(cursor_x-w.x0));
-        let a2 = Math.atan2((w.y2    -w.y0),(w.x2    -w.x0));
+        let   ac = Math.atan2((cursor_y-w.y0),(cursor_x-w.x0));
+        let   a2 = Math.atan2((w.y2    -w.y0),(w.x2    -w.x0));
         while(ac<a1) { ac += 2 * Math.PI; }
         while(a2<a1) { a2 += 2 * Math.PI; }
-        //debugwrite.innerHTML = "<div>"+d+"</div>"+
-        //                       "<div>"+(a1/DEG1)+"</div>"+
-        //                       "<div>"+(ac/DEG1)+"</div>"+
-        //                       "<div>"+(a2/DEG1)+"</div>";
         return ( a1 < ac && ac < a2 );
-        ////return ( a2 < ac && ac < a1 );
         return true;
       }
       return false;
