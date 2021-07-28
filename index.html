@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<header>
 <style type="text/css">
@@ -22,7 +23,15 @@
 	<body>
 		<h1></h1>
 		<div>
+			<svg>
+			</svg>
 			<svg id="svg" width="1290" height="160">
+<radialGradient id="sphere" fx="70%" fy="20%">
+  <stop offset="0%" stop-color="#fff" />
+  <stop offset="50%" stop-color="#fb0" />
+  <stop offset="90%" stop-color="#c90" />
+  <stop offset="100%" stop-color="#a80" />
+</radialGradient>
 
                         </svg>
 		</div>
@@ -44,7 +53,7 @@ const cursor = (function () {
   cursor.setAttribute('cx', cursor_x);
   cursor.setAttribute('cy', cursor_y);
   cursor.setAttribute('r', cursor_r);
-  cursor.setAttribute('fill', "#ED3");
+  cursor.setAttribute('fill', "url(#sphere)");
   cursor.setAttribute('id', 'cursor');
   svg.appendChild(cursor);
   return cursor
@@ -69,10 +78,17 @@ const DEG1 = Math.PI / 180;
    (cx, cy) : 回転する時の中心
    a: 回転速度（deg/tick)
 **/
-function createLine(x1,y1, x2,y2, cx=0,cy=0, a=0, init=0) {
+function createLine(x1,y1, x2,y2) {
   return {
-    type:"L", x1: x1, y1: y1, x2: x2, y2: y2, rot: { cx: cx, cy: cy,
-              x1: x1, y1: y1, x2: x2, y2: y2, a: a, i: init }
+    type:"L", x1: x1, y1: y1, x2: x2, y2: y2,
+    setRotation: function(cx, cy, a, init=0) {
+      this.rot = { cx: cx, cy: cy, x1: x1, y1: y1, x2: x2, y2: y2, a: a, i: init };
+      return this;
+    },
+    setCrank: function(dx, dy, a) {
+      this.crk = { x1: x1, y1: y1, x2: x2, y2: y2, rx: dx/2, ry: dy/2, a: a, i: 0};
+      return this;
+    },
   };
 }
 
@@ -87,34 +103,43 @@ function createLine(x1,y1, x2,y2, cx=0,cy=0, a=0, init=0) {
    a : 回転速度(deg/tick)
 **/
 function createArc(x0, y0, r, ap, aq, cx=0, cy=0, a=0, init=0) {
-  console.log("(",x0, y0, r, ap, aq,")");
+  //console.log("(",x0, y0, r, ap, aq,")");
   const x1 = x0 + r * Math.cos(ap*DEG1);
   const y1 = y0 + r * Math.sin(ap*DEG1);
   const x2 = x0 + r * Math.cos(aq*DEG1);
   const y2 = y0 + r * Math.sin(aq*DEG1);
   return {
-    type: "A", x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0: y0, r: r, rot: { cx: cx, cy: cy,
-               x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0, y0, a: a, i: init }
+    type: "A", x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0: y0, r: r,
+    setRotation: function(cx, cy, a, init=0) {
+      this.rot = {
+               x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0, y0,
+               cx: cx, cy: cy, a: a, i: init};
+      return this;
+    },
+    setCrank: function() {
+      this.crk = {};
+      return this;
+    },
   };
 }
 
 // 障害物
 const walls = [
-  //          x1, y1, x2, y2,      cx, cy, a
-  createLine( 60, 30, 60,130, 88.8675, 80, 1),
-  createLine( 60,130,147, 80, 88.8675, 80, 1),
-  createLine(147, 80, 60, 30, 88.8675, 80, 1),
+  //          x1, y1, x2, y2                   cx, cy, a
+  createLine( 60, 30, 60,130).setRotation(88.8675, 80, 1),
+  createLine( 60,130,147, 80).setRotation(88.8675, 80, 1),
+  createLine(147, 80, 60, 30).setRotation(88.8675, 80, 1),
   {type: "z"},
   //         x0, y0,   r,  ap,     aq,       cx, cy,  a
-  createArc(247, 80, 100, 150, 150+60, 188.8675, 80, -1),
-  createArc(160,130, 100, 270, 270+60, 188.8675, 80, -1),
-  createArc(160, 30, 100,  30,  30+60, 188.8675, 80, -1),
+  createArc(247, 80, 100, 150, 150+60).setRotation(188.8675, 80, -1),
+  createArc(160,130, 100, 270, 270+60).setRotation(188.8675, 80, -1),
+  createArc(160, 30, 100,  30,  30+60).setRotation(188.8675, 80, -1),
   {type: "z"},
 
-  createLine( 380,  10, 420,  10, 400, 80, 1.2),
-  createLine( 420,  10, 420, 150, 400, 80, 1.2),
-  createLine( 420, 150, 380, 150, 400, 80, 1.2),
-  createLine( 380, 150, 380,  10, 400, 80, 1.2),
+  createLine( 380,  10, 420,  10).setRotation(400, 80, 1.2),
+  createLine( 420,  10, 420, 150).setRotation(400, 80, 1.2),
+  createLine( 420, 150, 380, 150).setRotation(400, 80, 1.2),
+  createLine( 380, 150, 380,  10).setRotation(400, 80, 1.2),
   {type: "z"},
 
   createLine( 500, -10, 500,  20),
@@ -136,6 +161,10 @@ const walls = [
   createLine( 700, 125, 700, -10),
   {type: "z"},
   // ここに上下運動のプレス機を実装
+  createLine( 740, -45, 740,  10).setCrank(0, 40, 3),
+  createLine( 740,  10, 780,  10).setCrank(0, 40, 3),
+  createLine( 780,  10, 780, -45).setCrank(0, 40, 3),
+  {type: "z"},
   createLine( 740, 170, 740,  70),
   createLine( 740,  70, 780,  70),
   createLine( 780,  70, 780, 170),
@@ -149,15 +178,15 @@ const walls = [
   createLine( 980, 24.03733, 980, -10),
   {type: "z"},
   //           x1,  y1,  x2,  y2,  cx,  cy,   a
-  createLine( 900-50, 70- 5, 900+50, 70- 5, 900,  70, -0.4),
-  createLine( 900+50, 70- 5, 900+50, 70+ 5, 900,  70, -0.4),
-  createLine( 900+50, 70+ 5, 900-50, 70+ 5, 900,  70, -0.4),
-  createLine( 900-50, 70+ 5, 900-50, 70- 5, 900,  70, -0.4),
+  createLine( 900-50, 70- 5, 900+50, 70- 5).setRotation(900,  70, -0.4),
+  createLine( 900+50, 70- 5, 900+50, 70+ 5).setRotation(900,  70, -0.4),
+  createLine( 900+50, 70+ 5, 900-50, 70+ 5).setRotation(900,  70, -0.4),
+  createLine( 900-50, 70+ 5, 900-50, 70- 5).setRotation(900,  70, -0.4),
   {type: "z"},
-  createLine( 900- 5, 70-50, 900+ 5, 70-50, 900,  70, -0.4),
-  createLine( 900+ 5, 70-50, 900+ 5, 70+50, 900,  70, -0.4),
-  createLine( 900+ 5, 70+50, 900- 5, 70+50, 900,  70, -0.4),
-  createLine( 900- 5, 70+50, 900- 5, 70-50, 900,  70, -0.4),
+  createLine( 900- 5, 70-50, 900+ 5, 70-50).setRotation(900,  70, -0.4),
+  createLine( 900+ 5, 70-50, 900+ 5, 70+50).setRotation(900,  70, -0.4),
+  createLine( 900+ 5, 70+50, 900- 5, 70+50).setRotation(900,  70, -0.4),
+  createLine( 900- 5, 70+50, 900- 5, 70-50).setRotation(900,  70, -0.4),
   {type: "z"},
   createLine( 980, 170, 980, 40),
   createLine( 980,  40, 951.96152, 40),
@@ -174,7 +203,7 @@ function resetSVG() {
   // カーソル以外を削除する
   // ※冒頭がカーソルであることを前提にしている
   /* https://freefielder.jp/blog/2015/09/javascript-remove-childnodes.html */
-  while(svg.childElementCount>=2) {
+  while(svg.childElementCount>=3) {
     svg.removeChild(svg.lastChild);
   }
   let d = "M";
@@ -292,6 +321,7 @@ function collision() {
       limit=="inf" ?
       function(){
         rotations();
+        cranks();
         resetSVG();
         if(collision()){
           cursor.setAttribute('fill', 'red');
@@ -342,6 +372,19 @@ function rotations() {
       w.x0 = (w.rot.x0-w.rot.cx) * Math.cos(th) - (w.rot.y0-w.rot.cy) * Math.sin(th) + w.rot.cx;
       w.y0 = (w.rot.x0-w.rot.cx) * Math.sin(th) + (w.rot.y0-w.rot.cy) * Math.cos(th) + w.rot.cy;
     }
+  });
+}
+function cranks() {
+  walls.filter(w=>w.crk!=undefined).forEach(function(w){
+    w.crk.i++;
+    const th = w.crk.a * w.crk.i * Math.PI / 180;
+    if(w.type=="L") {
+      w.x1 = w.crk.x1 + w.crk.rx - w.crk.rx * Math.cos(th);
+      w.x2 = w.crk.x2 + w.crk.rx - w.crk.rx * Math.cos(th);
+      w.y1 = w.crk.y1 + w.crk.ry - w.crk.ry * Math.cos(th);
+      w.y2 = w.crk.y2 + w.crk.ry - w.crk.ry * Math.cos(th);
+    }
+
   });
 }
         </script>
