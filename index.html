@@ -325,6 +325,8 @@ function collision() {
         resetSVG();
         if(collision()){
           cursor.setAttribute('fill', 'red');
+          Effect('explode1');
+          clearInterval(timerID);// タイマー終了
         }else{
           cursor.setAttribute('fill', 'yellow');
         }
@@ -342,7 +344,7 @@ function collision() {
           ('00'+mls).slice(-2);
         if(rest == 0) {
           alert('Time Up!');
-          clearInterval(timerID);
+          clearInterval(timerID);// タイマー終了
           timerField.textContent = "--:--.--";
           return;
         }
@@ -386,6 +388,38 @@ function cranks() {
     }
 
   });
+}
+//
+function Effect(variation){
+  if(variation=='explode1'){
+    const s = 20; //debris' max size
+    const debris = [...Array(100)].map(_=>{
+      let M = "M " + cursor_x + " " + cursor_y;
+      const l = " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " z";
+      const debri = document.createElementNS(NS, 'path');
+      debri.setAttribute('d', M + l);
+      debri.setAttribute('fill','Yellow');
+      debri.setAttribute('stroke','Black');
+      svg.appendChild(debri);
+      return {
+        l: l,
+        body: debri,
+        vx: Math.random()*60-30, vy: Math.random()*60-30,
+        x: cursor_x, y: cursor_y,
+      };
+    });
+    setInterval(function(){
+      debris.forEach(function(d){
+        d.vy+=.1;
+        d.x+=d.vx;
+        d.y+=d.vy;
+        d.body.setAttribute('d', "M" + d.x + " " + d.y + d.l);
+      });
+    }, 10);
+  }
 }
         </script>
 </html>
