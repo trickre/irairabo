@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<header>
     <meta charset="utf-8">
@@ -32,107 +33,236 @@
    50%{transform: translateY(var(--h));}
   100%{transform: translateY(0);}
 }
+.button {
+  background-color: orange;
+  border: gray;
+  width: 50px;
+  height: 40px;
+}
 </style>
 </header>
 	<body>
-		<h1>イライラゲーム棒</h1>
+		<h1></h1>
 		<div>
-			<svg id="svg" width="1290" height="160" style="position:absolute;left:0;top:160px;">
-
-  <!-- 第一の三角形 -->
-  <path d="M 60 30 l 0 100 l 86.6 -50 l -86.6 -50"
-        class="rot clockwise" style="--cx:88.8675px; --cy:80px;"/>
-  <!-- 第二の三角形（何となくルーローにしてみた）
-  <path d="M 160  30 a 100 100 0 0 1 86.6  50" class="rot2"/>
-  <path d="M 160  30 a 100 100 0 0 0    0 100" class="rot2"/>
-  <path d="M 160 130 a 100 100 0 0 0 86.6 -50" class="rot2"/>-->
-  <path d="M 160 30 a 100 100 0 0 1  86.6  50
-                    a 100 100 0 0 1 -86.6  50
-                    a 100 100 0 0 1   0  -100"
-        class="rot anticlockwise"
-        style="--cx: 188.8675px; --cy: 80px;"/>
-
-  <rect x="380" y="10" width="40" height="140" fill="black"
-        class="rot anticlockwise"
-        style="--cx:400px;--cy:80px;"></rect>
-  <path d="M 500 0 V 20 h 70 V 140 h  30 V 0 z" class="static"/>
-  <path d="M 500     40 h 50 V 160 h -50 z" class="static"/>
-  <path d="M 620     30 h 40 V 160 h -40 z" class="static"/>
-  <path d="M 690 0           V 120 h  40 V 0 z" class="static"/>
-
-  <path d="M 760 -30 V 50 h 40 V -80 z"
-        class="vPiston" style="--h:30px"/>
-  <path d="M 760 160 V 90 h 40 V 160 z"/>
-
-  <path d="M895 75
-           h -35 v  10
-           h  35 v  35
-           h  10 v -35
-           h  35 v -10
-           h -35 v -35
-           h -10 z"
-        class="rot anticlockwise"
-        style="--cx:900px; --cy:80px;"/>
-  <path d="M830 0
-           v 90 h 20
-           A 50 50 0 0 1 940 45
-           h 40 V 0 z"
-        class="static"/>
-
-
+			<svg>
+			</svg>
+			<svg id="svg" width="1290" height="160">
+<radialGradient id="sphere" fx="70%" fy="20%">
+  <stop offset="0%" stop-color="#fff" />
+  <stop offset="50%" stop-color="#fb0" />
+  <stop offset="90%" stop-color="#c90" />
+  <stop offset="100%" stop-color="#a80" />
+</radialGradient>
 
 			</svg>
 		</div>
-		<h2>
-			<span id="timer">--:--.--</span>
-			<span onclick="StartTimer(10000);">/10sec(sample)</span>
-		</h2>
-		<div id="LockButton"></div>
+                <h2 id="timer">--:--.--</h2>
+                <div class="button" onclick="StartTimer('inf')">start</div>
+                <div id="debug"></div>
 
 	</body>
 	<script>
 const NS = "http://www.w3.org/2000/svg";
 const svg = document.getElementById('svg');
+const debugwrite = document.getElementById('debug');
 // 自機（カーソル）
+let cursor_x = 30;
+let cursor_y = 50;
+const cursor_r = 10;
+const cursor = (function () {
+  const cursor = document.createElementNS(NS, 'circle');
+  cursor.setAttribute('cx', cursor_x);
+  cursor.setAttribute('cy', cursor_y);
+  cursor.setAttribute('r', cursor_r);
+  cursor.setAttribute('fill', "url(#sphere)");
+  cursor.setAttribute('id', 'cursor');
+  svg.appendChild(cursor);
+  return cursor
+})();
 
-const cursor = document.createElementNS(NS, 'circle');
-cursor.setAttribute('id', 'ME');
-cursor.setAttribute('cx', 30);
-cursor.setAttribute('cy', 50);
-cursor.setAttribute('r', 10);
-cursor.setAttribute('fill', "#ED3");
-const move = function(dx, dy) {
-  const x = Number(cursor.getAttribute('cx'));
-  const y = Number(cursor.getAttribute('cy'));
-  cursor.setAttribute('cx', x+dx);
-  cursor.setAttribute('cy', y+dy);
-  if(collision({x1:x, y1:y, x2:x+dx, y2:y+dy})) {
-    cursor.setAttribute('fill', "#F00");
-  }else{
-    cursor.setAttribute('fill', "#ED3");
-  }
+function move(dx, dy) {
+  const old_x = cursor_x;
+  const old_y = cursor_y;
+  cursor_x += dx;
+  cursor_y += dy;
+  cursor.setAttribute('cx', cursor_x);
+  cursor.setAttribute('cy', cursor_y);
 };
 svg.appendChild(cursor);
 
 
-// 障害物
-/*
-const barrier = document.createElementNS(NS, 'path');
-barrier.setAttribute('d', 'M200 20 L130 140 L280 140 L280 100 z');
-//barrier.setAttribute('fill', '');
-barrier.setAttribute('stroke', 'black');
-svg.appendChild(barrier);
-*/
+const DEG1 = Math.PI / 180;
 
-// マウスオーバーイベント設定
-[...svg.children].forEach(function(b){
-  b.addEventListener('mouseover', event=>{
-    event.target.setAttribute('fill','red');
-  });
-  b.addEventListener('mouseout', event=>{
-    event.target.setAttribute('fill','black');
-  });
-});
+/**
+  直線状の壁を生成する。
+   (x1, x2) : 始点
+   (x2, y2) : 終点
+   // 以下オプショナル引数
+   (cx, cy) : 回転する時の中心
+   a: 回転速度（deg/tick)
+**/
+function createLine(x1,y1, x2,y2) {
+  return {
+    type:"L", x1: x1, y1: y1, x2: x2, y2: y2,
+    setRotation: function(cx, cy, a, init=0) {
+      this.rot = { cx: cx, cy: cy, x1: x1, y1: y1, x2: x2, y2: y2, a: a, i: init };
+      return this;
+    },
+    setCrank: function(dx, dy, a) {
+      this.crk = { x1: x1, y1: y1, x2: x2, y2: y2, rx: dx/2, ry: dy/2, a: a, i: 0};
+      return this;
+    },
+  };
+}
+
+/**
+  円弧状の壁を生成する。
+   (x0, y0) : 円弧の中心座標（みえない）
+   r : 円弧の半径
+   ap : 円弧の始点の、中心座標から見た時の極座標
+   aq : 円弧の終点の、中心座標から見た時の極座標
+   // 以下オプショナル引数
+   (cx, cy) : 回転の中心
+   a : 回転速度(deg/tick)
+**/
+function createArc(x0, y0, r, ap, aq, cx=0, cy=0, a=0, init=0) {
+  //console.log("(",x0, y0, r, ap, aq,")");
+  const x1 = x0 + r * Math.cos(ap*DEG1);
+  const y1 = y0 + r * Math.sin(ap*DEG1);
+  const x2 = x0 + r * Math.cos(aq*DEG1);
+  const y2 = y0 + r * Math.sin(aq*DEG1);
+  return {
+    type: "A", x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0: y0, r: r,
+    setRotation: function(cx, cy, a, init=0) {
+      this.rot = {
+               x1: x1, y1: y1, x2: x2, y2: y2, x0: x0, y0, y0,
+               cx: cx, cy: cy, a: a, i: init};
+      return this;
+    },
+    setCrank: function() {
+      this.crk = {};
+      return this;
+    },
+  };
+}
+
+// 障害物
+const walls = [
+  //          x1, y1, x2, y2                   cx, cy, a
+  createLine( 60, 30, 60,130).setRotation(88.8675, 80, 1),
+  createLine( 60,130,147, 80).setRotation(88.8675, 80, 1),
+  createLine(147, 80, 60, 30).setRotation(88.8675, 80, 1),
+  {type: "z"},
+  //         x0, y0,   r,  ap,     aq,       cx, cy,  a
+  createArc(247, 80, 100, 150, 150+60).setRotation(188.8675, 80, -1),
+  createArc(160,130, 100, 270, 270+60).setRotation(188.8675, 80, -1),
+  createArc(160, 30, 100,  30,  30+60).setRotation(188.8675, 80, -1),
+  {type: "z"},
+
+  createLine( 380,  10, 420,  10).setRotation(400, 80, 1.2),
+  createLine( 420,  10, 420, 150).setRotation(400, 80, 1.2),
+  createLine( 420, 150, 380, 150).setRotation(400, 80, 1.2),
+  createLine( 380, 150, 380,  10).setRotation(400, 80, 1.2),
+  {type: "z"},
+
+  createLine( 500, -10, 500,  20),
+  createLine( 500,  20, 570,  20),
+  createLine( 570,  20, 570, 130),
+  createLine( 570, 130, 600, 130),
+  createLine( 600, 130, 600, -10),
+  {type: "z"},
+  createLine( 500, 180, 500,  60),
+  createLine( 500,  60, 540,  60),
+  createLine( 540,  60, 540, 180),
+  {type: "z"},
+  createLine( 620, 180, 620,  25),
+  createLine( 620,  25, 660,  25),
+  createLine( 660,  25, 660, 180),
+  {type: "z"},
+  createLine( 680, -20, 680, 125),
+  createLine( 680, 125, 700, 125),
+  createLine( 700, 125, 700, -10),
+  {type: "z"},
+  // ここに上下運動のプレス機を実装
+  createLine( 740, -45, 740,  10).setCrank(0, 40, 3),
+  createLine( 740,  10, 780,  10).setCrank(0, 40, 3),
+  createLine( 780,  10, 780, -45).setCrank(0, 40, 3),
+  {type: "z"},
+  createLine( 740, 170, 740,  70),
+  createLine( 740,  70, 780,  70),
+  createLine( 780,  70, 780, 170),
+  {type: "z"},
+  createLine( 820, -10, 820,  80.41889),
+  createLine( 820, 80.41889, 840.9115348, 80.41889),
+  //M840.9115348192676 80.41889066001582 A60 60 0 0 1 938.5672565811924 24.037333412861315 z
+  // コツ：先に円弧だけ作成して、F12でDOMから実際の座標↑を取り出すのが手計算いらずで楽。
+  createArc( 900, 70, 60, 170, 310),// x0, y0, r, ap, aq
+  createLine( 938.56726, 24.03733, 980, 24.03733),
+  createLine( 980, 24.03733, 980, -10),
+  {type: "z"},
+  //           x1,  y1,  x2,  y2,  cx,  cy,   a
+  createLine( 900-50, 70- 5, 900+50, 70- 5).setRotation(900,  70, -0.4),
+  createLine( 900+50, 70- 5, 900+50, 70+ 5).setRotation(900,  70, -0.4),
+  createLine( 900+50, 70+ 5, 900-50, 70+ 5).setRotation(900,  70, -0.4),
+  createLine( 900-50, 70+ 5, 900-50, 70- 5).setRotation(900,  70, -0.4),
+  {type: "z"},
+  createLine( 900- 5, 70-50, 900+ 5, 70-50).setRotation(900,  70, -0.4),
+  createLine( 900+ 5, 70-50, 900+ 5, 70+50).setRotation(900,  70, -0.4),
+  createLine( 900+ 5, 70+50, 900- 5, 70+50).setRotation(900,  70, -0.4),
+  createLine( 900- 5, 70+50, 900- 5, 70-50).setRotation(900,  70, -0.4),
+  {type: "z"},
+  createLine( 980, 170, 980, 40),
+  createLine( 980,  40, 951.96152, 40),
+  //M951.9615242270663 40 A60 60 0 0 1 854.0373334128614 108.56725658119237 z
+  createArc(900, 70, 60, -30, 140),
+  createLine(854.03733, 108.55626, 820, 108.55626),
+  createLine(820, 108.55626, 820, 180),
+  {type: "z"},
+
+];
+
+// SVG生成
+function resetSVG() {
+  // カーソル以外を削除する
+  // ※冒頭がカーソルであることを前提にしている
+  /* https://freefielder.jp/blog/2015/09/javascript-remove-childnodes.html */
+  while(svg.childElementCount>=3) {
+    svg.removeChild(svg.lastChild);
+  }
+  let d = "M";
+  let last = {x:0, y:0};
+  for(let i=0;i<walls.length;i++) {
+    const w = walls[i];
+    if(w.type=="L") {
+      if(d=="M") d = d + w.x1 + " " + w.y1 + " ";
+      d = d + "L" + w.x2 + " " + w.y2 + " ";
+    }
+    if(w.type=="A") {
+      if(d=="M") d = d + w.x1 + " " + w.y1 + " ";
+      d = d + "A" + w.r + " " + w.r + " 0 0 1 " + w.x2 + " " + w.y2 + " ";
+    }
+    // pathを閉じる
+    if(w.type=="z") {
+      d = d + "z";
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('stroke', 'black');
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+      d = "M";
+    }
+  }
+  //test用もしくは模様
+  //const c = document.createElementNS(NS, 'circle');
+  //c.setAttribute('cx', 247);
+  //c.setAttribute('cy', 80);
+  //c.setAttribute('r', 99);
+  //c.setAttribute('stroke', "#FF9900");
+  //c.setAttribute('fill', "none");
+  //svg.appendChild(c);
+}
+
+resetSVG();
 
 // 入力判定
 document.body.addEventListener('keydown',event=>{
@@ -144,6 +274,7 @@ document.body.addEventListener('keydown',event=>{
 
 // 当たり判定
 function collision() {
+  debugwrite.textContent = "";
   return walls.map(w=>{
 
     if(w.type=="L") {
@@ -164,11 +295,32 @@ function collision() {
       const dot1 = wx * ux + wy * uy;
       const dot2 = wx * vx + wy * vy;
       if(dot1*dot2 < 0) {
-        return true; // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる＝線分と円は触れている
+        // 壁ベクトルと、両端から中心までのベクトルとの、２つの内積の符号が異なる
+        // ＝線分と円は触れている
+        return true;
       }
       const v = Math.sqrt( vx*vx + vy*vy );
       // あとは、線分の終点が円内にあるかないかで決定する
       return (v <= cursor_r);
+    }
+    if(w.type=="A") {
+      const dx = cursor_x - w.x0;
+      const dy = cursor_y - w.y0;
+      // 円弧の中心からの距離
+      const d = Math.sqrt( dx*dx + dy*dy );
+      if( Math.abs(w.r - cursor_r) < d && d < w.r + cursor_r ){
+        // 全円には接している。
+
+        const a1 = Math.atan2((w.y1    -w.y0),(w.x1    -w.x0));
+        let   ac = Math.atan2((cursor_y-w.y0),(cursor_x-w.x0));
+        let   a2 = Math.atan2((w.y2    -w.y0),(w.x2    -w.x0));
+        while(ac<a1) { ac += 2 * Math.PI; }
+        while(a2<a1) { a2 += 2 * Math.PI; }
+        return ( a1 < ac && ac < a2 );
+        return true;
+      }
+      return false;
+
     }
 
     // なんでもない＝衝突してない
@@ -177,49 +329,120 @@ function collision() {
   }).reduce((a,b)=>a||b);
 }
 	</script>
-        <script>
-const timerField = document.getElementById('timer');
-const StartTimer = function(ms) {
-  if(timerField.textContent.indexOf('0')>=0){
-    return false; // 二重起動防止（仮）
-  }
-  const limit = ms;
-  const start = Date.now();
-
-  const timerID = setInterval(function(){
-    // タイマー反復処理
-    svg.style.left = (Number(svg.style.left.replace('px',''))-0.2)+"px";
-    const now = Date.now();
-    let rest= Math.max(0, limit - (now - start));
-    const min = Math.floor(rest/60000);
-    const sec = Math.floor((rest%60000)/1000);
-    const mls = Math.floor((rest%1000)/10);
-    timerField.textContent = 
-      ('00'+min).slice(-2) + ':' +
-      ('00'+sec).slice(-2) + '.' +
-      ('00'+mls).slice(-2);
-    if(rest == 0) {
-      timerField.textContent = "00:00.00";
-      alert('Time Up!');
+        <script> const timerField = document.getElementById('timer'); const StartTimer = (function(){ let timerID = -1;
+  return function(ms) {
+    if(timerID!=-1) {
       clearInterval(timerID);
-      timerField.textContent = "--:--.--";
-      return;
+      timerID = -1;
     }
-
-  }, 10);
-  return true;
-};
+    if(timerField.textContent.indexOf('0')>=0){
+      return false; // 二重起動防止（仮）
+    }
+    const limit = ms;
+    const start = Date.now();
+    timerID = setInterval(
+      limit=="inf" ?
+      function(){
+        rotations();
+        cranks();
+        resetSVG();
+        if(collision()){
+          cursor.setAttribute('fill', 'red');
+          Effect('explode1');
+          clearInterval(timerID);// タイマー終了
+        }else{
+          cursor.setAttribute('fill', 'yellow');
+        }
+      } :
+      function(){
+        //{{{#section: 時限性の時の処理
+        const now = Date.now();
+        let rest= Math.max(0, limit - (now - start));
+        const min = Math.floor(rest/60000);
+        const sec = Math.floor((rest%60000)/1000);
+        const mls = Math.floor((rest%1000)/10);
+        timerField.textContent = 
+          ('00'+min).slice(-2) + ':' +
+          ('00'+sec).slice(-2) + '.' +
+          ('00'+mls).slice(-2);
+        if(rest == 0) {
+          alert('Time Up!');
+          clearInterval(timerID);// タイマー終了
+          timerField.textContent = "--:--.--";
+          return;
+        }
+        //}}}#section
+        // 共通処理
+    }, 10);
+    return true;
+  };
+})();
 
 // 回転アニメーションのコマ処理
 function rotations() {
   walls.filter(w=>w.rot!=undefined).forEach(function(w){
     w.rot.i++;
-    const th = w.rot.a * w.rot.i;
-    w.x1 = (w.rot.x1-w.rot.cx) * Math.cos(th) - (w.rot.y1-w.rot.cy) * Math.sin(th) + w.rot.cx;
-    w.y1 = (w.rot.x1-w.rot.cx) * Math.sin(th) + (w.rot.y1-w.rot.cy) * Math.cos(th) + w.rot.cy;
-    w.x2 = (w.rot.x2-w.rot.cx) * Math.cos(th) - (w.rot.y2-w.rot.cy) * Math.sin(th) + w.rot.cx;
-    w.y2 = (w.rot.x2-w.rot.cx) * Math.sin(th) + (w.rot.y2-w.rot.cy) * Math.cos(th) + w.rot.cy;
+    const th = w.rot.a * w.rot.i * Math.PI / 180;
+    if(w.type=="L") {
+      w.x1 = (w.rot.x1-w.rot.cx) * Math.cos(th) - (w.rot.y1-w.rot.cy) * Math.sin(th) + w.rot.cx;
+      w.y1 = (w.rot.x1-w.rot.cx) * Math.sin(th) + (w.rot.y1-w.rot.cy) * Math.cos(th) + w.rot.cy;
+      w.x2 = (w.rot.x2-w.rot.cx) * Math.cos(th) - (w.rot.y2-w.rot.cy) * Math.sin(th) + w.rot.cx;
+      w.y2 = (w.rot.x2-w.rot.cx) * Math.sin(th) + (w.rot.y2-w.rot.cy) * Math.cos(th) + w.rot.cy;
+    }
+    if(w.type=="A") {
+      w.x1 = (w.rot.x1-w.rot.cx) * Math.cos(th) - (w.rot.y1-w.rot.cy) * Math.sin(th) + w.rot.cx;
+      w.y1 = (w.rot.x1-w.rot.cx) * Math.sin(th) + (w.rot.y1-w.rot.cy) * Math.cos(th) + w.rot.cy;
+      w.x2 = (w.rot.x2-w.rot.cx) * Math.cos(th) - (w.rot.y2-w.rot.cy) * Math.sin(th) + w.rot.cx;
+      w.y2 = (w.rot.x2-w.rot.cx) * Math.sin(th) + (w.rot.y2-w.rot.cy) * Math.cos(th) + w.rot.cy;
+      w.x0 = (w.rot.x0-w.rot.cx) * Math.cos(th) - (w.rot.y0-w.rot.cy) * Math.sin(th) + w.rot.cx;
+      w.y0 = (w.rot.x0-w.rot.cx) * Math.sin(th) + (w.rot.y0-w.rot.cy) * Math.cos(th) + w.rot.cy;
+    }
   });
+}
+function cranks() {
+  walls.filter(w=>w.crk!=undefined).forEach(function(w){
+    w.crk.i++;
+    const th = w.crk.a * w.crk.i * Math.PI / 180;
+    if(w.type=="L") {
+      w.x1 = w.crk.x1 + w.crk.rx - w.crk.rx * Math.cos(th);
+      w.x2 = w.crk.x2 + w.crk.rx - w.crk.rx * Math.cos(th);
+      w.y1 = w.crk.y1 + w.crk.ry - w.crk.ry * Math.cos(th);
+      w.y2 = w.crk.y2 + w.crk.ry - w.crk.ry * Math.cos(th);
+    }
+
+  });
+}
+//
+function Effect(variation){
+  if(variation=='explode1'){
+    const s = 20; //debris' max size
+    const debris = [...Array(100)].map(_=>{
+      let M = "M " + cursor_x + " " + cursor_y;
+      const l = " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " l " + (Math.random()*s*2-s) + " " + (Math.random()*s*2-s)
+              + " z";
+      const debri = document.createElementNS(NS, 'path');
+      debri.setAttribute('d', M + l);
+      debri.setAttribute('fill','Yellow');
+      debri.setAttribute('stroke','Black');
+      svg.appendChild(debri);
+      return {
+        l: l,
+        body: debri,
+        vx: Math.random()*60-30, vy: Math.random()*60-30,
+        x: cursor_x, y: cursor_y,
+      };
+    });
+    setInterval(function(){
+      debris.forEach(function(d){
+        d.vy+=.1;
+        d.x+=d.vx;
+        d.y+=d.vy;
+        d.body.setAttribute('d', "M" + d.x + " " + d.y + d.l);
+      });
+    }, 10);
+  }
 }
         </script>
         <script>
