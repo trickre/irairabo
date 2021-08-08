@@ -1,16 +1,37 @@
 <!DOCTYPE html>
 <html>
 	<header>
+    <meta charset="utf-8">
 <style type="text/css">
 #svg {
   background-color: #c0ffee;
+
 }
-.anime1 {
-  animation: strokeAnimation1 linear 3s infinite;
+#LockButton {
+  background-color: #ffee00;
+  width: 20px;
+  height:20px;
+  position: absolute;
+  left: 100px;
+  top: 250px;
 }
-@keyframes strokeAnimation1{
-  from{transform-origin:185px 90px; transform: rotate(0);}
-  to  {transform-origin:185px 90px; transform: rotate(360deg);}
+.rot2 { animation: rotation2 linear 3s infinite; }
+@keyframes rotation2{
+  from{transform-origin:188.8675px 80px; transform: rotate(0);}
+  to  {transform-origin:188.8675px 80px; transform: rotate(-360deg);}
+}
+.clockwise { --rotto:360deg; }
+.anticlockwise { --rotto:-360deg; }
+.rot { animation: varrot linear 3s infinite; }
+@keyframes varrot{
+  from{transform-origin:var(--cx) var(--cy); transform: rotate(0);}
+  to  {transform-origin:var(--cx) var(--cy); transform: rotate(var(--rotto));}
+}
+.vPiston { animation: varVPiston linear 1s infinite; }
+@keyframes varVPiston{
+    0%{transform: translateY(0);}
+   50%{transform: translateY(var(--h));}
+  100%{transform: translateY(0);}
 }
 .button {
   background-color: orange;
@@ -19,7 +40,7 @@
   height: 40px;
 }
 </style>
-        </header>
+</header>
 	<body>
 		<h1></h1>
 		<div>
@@ -33,7 +54,7 @@
   <stop offset="100%" stop-color="#a80" />
 </radialGradient>
 
-                        </svg>
+			</svg>
 		</div>
                 <h2 id="timer">--:--.--</h2>
                 <div class="button" onclick="StartTimer('inf')">start</div>
@@ -67,6 +88,8 @@ function move(dx, dy) {
   cursor.setAttribute('cx', cursor_x);
   cursor.setAttribute('cy', cursor_y);
 };
+svg.appendChild(cursor);
+
 
 const DEG1 = Math.PI / 180;
 
@@ -421,5 +444,30 @@ function Effect(variation){
     }, 10);
   }
 }
+        </script>
+        <script>
+function pointerLock(elem){
+  const list = [
+    "requestPointerLock",
+    "webkitRequestPointerLock",
+    "mozRequestPointerLock"
+  ];
+
+  for(const key in list) {
+    if( elem[ list[key] ] ) {
+      elem[ list[key] ]();
+      return true;
+    }
+  }
+  return false;
+}
+
+window.onload = () =>{
+  const btn = document.getElementById('LockButton');
+  btn.onclick = ()=>{
+    pointerLock(btn);
+    btn.hidden = true;
+  };
+};
         </script>
 </html>
