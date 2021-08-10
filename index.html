@@ -32,6 +32,7 @@
    50%{transform: translateY(var(--h));}
   100%{transform: translateY(0);}
 }
+#debug_g{float:left;margin-top:400px;}
 </style>
 </header>
 	<body>
@@ -88,9 +89,77 @@
 			<span onclick="StartTimer(10000);">/10sec(sample)</span>
 		</h2>
 		<div id="LockButton"></div>
-
-	</body>
+    <div id="debug_g">
+      <div>
+        <h1 id="absolute"></h1>
+      </div>
+      <div>
+        <h1 id="alpha"></h1>
+      </div>
+      <div>
+        <h1 id="beta"></h1>
+      </div>
+      <div>
+        <h1 id="gamma"></h1>
+      </div>
+    </div>
+</body>
 	<script>
+    /*****************************/
+    /* G-sensor 利用のための準備 */
+    /*****************************/
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // iOS 13+
+      //popupOpen("requestPermissionPopup");
+      DeviceOrientationEvent.requestPermission().then(response => {
+        if (response === 'granted') {
+          window.addEventListener("deviceorientation", handleOrientation, true);
+        }
+      }).catch(console.error);
+    } else {
+      // non iOS 13+
+      window.addEventListener("deviceorientation", handleOrientation, true);
+    }
+    
+    if(DeviceMotionEvent.requestPermission){
+      DeviceMotionEvent.requestPermission()
+      .then(permissionStatus => {
+        if(permissionStatus === 'granted'){
+          window.addEventListener('devicemotion', (e)=>{
+            if(!e.accelerationIncludingGravity){
+              alert('No accelerationIncludingGravity');
+              return;
+            }
+            alert(e.accelerationIncludingGravity.x);
+          });
+        }
+      })
+      .catch(console.error);
+    }else{
+      alert('No requestPermission');
+    }
+
+    const absolute = document.getElementById('absolute');
+    const alpha = document.getElementById('alpha');
+    const beta = document.getElementById('beta');
+    const gamma = document.getElementById('gamma');
+
+    /* G変化時のイベント関数 */
+    function handleOrientation(event) {
+      absolute.textContent = FormatReal(event.absolute,3,4);
+      alpha.textContent = FormatReal(event.alpha,3,4);
+      beta.textContent = FormatReal(event.beta,3,4);
+      gamma.textContent = FormatReal(event.gamma,3,4);
+      
+      move(event.gamma,event.beta);
+    }
+    function FormatReal(real, k1, k2){
+      let int = Math.floor(real);
+      let frc = real -int;
+      int = ('='.repeat(k1)+int).slice(k1);
+      frc = Math.floor(frc*Math.pow(10, k2)) % Math.pow(10, k2);
+      return int + '.' + frc;
+    }
 const NS = "http://www.w3.org/2000/svg";
 const svg = document.getElementById('svg');
 // 自機（カーソル）
