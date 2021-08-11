@@ -1,86 +1,132 @@
 <!DOCTYPE html>
 <html>
-	<header>
-    <meta charset="utf-8">
-<style type="text/css">
-#svg {
-  background-color: #c0ffee;
+<header>
+  <meta charset="utf-8">
+  <style type="text/css">
+    #svg {
+      background-color: #c0ffee;
 
-}
-#LockButton {
-  background-color: #ffee00;
-  width: 20px;
-  height:20px;
-  position: absolute;
-  left: 100px;
-  top: 250px;
-}
-.rot2 { animation: rotation2 linear 3s infinite; }
-@keyframes rotation2{
-  from{transform-origin:188.8675px 80px; transform: rotate(0);}
-  to  {transform-origin:188.8675px 80px; transform: rotate(-360deg);}
-}
-.clockwise { --rotto:360deg; }
-.anticlockwise { --rotto:-360deg; }
-.rot { animation: varrot linear 3s infinite; }
-@keyframes varrot{
-  from{transform-origin:var(--cx) var(--cy); transform: rotate(0);}
-  to  {transform-origin:var(--cx) var(--cy); transform: rotate(var(--rotto));}
-}
-.vPiston { animation: varVPiston linear 1s infinite; }
-@keyframes varVPiston{
-    0%{transform: translateY(0);}
-   50%{transform: translateY(var(--h));}
-  100%{transform: translateY(0);}
-}
-#debug_g{float:left;margin-top:400px;}
-.button {
-  background-color: orange;
-  border: gray;
-  width: 50px;
-  height: 40px;
-}
-</style>
+    }
+
+    #LockButton {
+      background-color: #ffee00;
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      left: 100px;
+      top: 250px;
+    }
+
+    .rot2 {
+      animation: rotation2 linear 3s infinite;
+    }
+
+    @keyframes rotation2 {
+      from {
+        transform-origin: 188.8675px 80px;
+        transform: rotate(0);
+      }
+
+      to {
+        transform-origin: 188.8675px 80px;
+        transform: rotate(-360deg);
+      }
+    }
+
+    .clockwise {
+      --rotto: 360deg;
+    }
+
+    .anticlockwise {
+      --rotto: -360deg;
+    }
+
+    .rot {
+      animation: varrot linear 3s infinite;
+    }
+
+    @keyframes varrot {
+      from {
+        transform-origin: var(--cx) var(--cy);
+        transform: rotate(0);
+      }
+
+      to {
+        transform-origin: var(--cx) var(--cy);
+        transform: rotate(var(--rotto));
+      }
+    }
+
+    .vPiston {
+      animation: varVPiston linear 1s infinite;
+    }
+
+    @keyframes varVPiston {
+      0% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(var(--h));
+      }
+
+      100% {
+        transform: translateY(0);
+      }
+    }
+
+    #debug_g {
+      float: left;
+      margin-top: 400px;
+    }
+
+    .button {
+      background-color: orange;
+      border: gray;
+      width: 50px;
+      height: 40px;
+    }
+  </style>
 </header>
-	<body>
-		<h1></h1>
-		<div>
-			<svg>
-			</svg>
-			<svg id="svg" width="1290" height="160">
-<radialGradient id="sphere" fx="70%" fy="20%">
-  <stop offset="0%" stop-color="#fff" />
-  <stop offset="50%" stop-color="#fb0" />
-  <stop offset="90%" stop-color="#c90" />
-  <stop offset="100%" stop-color="#a80" />
-</radialGradient>
 
-			</svg>
-		</div>
-		<h2>
-			<span id="timer">--:--.--</span>
-			<span onclick="StartTimer(10000);">/10sec(sample)</span>
-		</h2>
-		<div id="LockButton"></div>
-    <div id="debug_g">
-      <div>
-        <h1 id="absolute"></h1>
-      </div>
-      <div>
-        <h1 id="alpha"></h1>
-      </div>
-      <div>
-        <h1 id="beta"></h1>
-      </div>
-      <div>
-        <h1 id="gamma"></h1>
-      </div>
+<body>
+  <h1></h1>
+  <div>
+    <svg>
+    </svg>
+    <svg id="svg" width="1290" height="160">
+      <radialGradient id="sphere" fx="70%" fy="20%">
+        <stop offset="0%" stop-color="#fff" />
+        <stop offset="50%" stop-color="#fb0" />
+        <stop offset="90%" stop-color="#c90" />
+        <stop offset="100%" stop-color="#a80" />
+      </radialGradient>
+    </svg>
+  </div>
+  <h2>
+    <span id="timer">--:--.--</span>
+    <span onclick="StartTimer(10000);">/10sec(sample)</span>
+  </h2>
+  <div id="LockButton"></div>
+  <div id="debug_g">
+    <div>
+      <h1 id="absolute"></h1>
     </div>
-                <h2 id="timer">--:--.--</h2>
-                <div class="button" onclick="StartTimer('inf')">start</div>
-                <div id="debug"></div>
+    <div>
+      <h1 id="alpha"></h1>
+    </div>
+    <div>
+      <h1 id="beta"></h1>
+    </div>
+    <div>
+      <h1 id="gamma"></h1>
+    </div>
+  </div>
+  <h2 id="timer">--:--.--</h2>
+  <div class="button" onclick="StartTimer('inf')">start</div>
+  <div id="debug"></div>
 
-	</body>
+</body>
 	<script>
     /*****************************/
     /* G-sensor 利用のための準備 */
