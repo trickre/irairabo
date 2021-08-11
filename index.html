@@ -127,87 +127,88 @@
   <div id="debug"></div>
 
 </body>
-	<script>
-    /*****************************/
-    /* G-sensor 利用のための準備 */
-    /*****************************/
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-      // iOS 13+
-      //popupOpen("requestPermissionPopup");
-      DeviceOrientationEvent.requestPermission().then(response => {
-        if (response === 'granted') {
-          window.addEventListener("deviceorientation", handleOrientation, true);
-        }
-      }).catch(console.error);
-    } else {
-      // non iOS 13+
-      window.addEventListener("deviceorientation", handleOrientation, true);
-    }
+<script>
+  /*****************************/
+  /* G-sensor 利用のための準備 */
+  /*****************************/
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // iOS 13+
+    //popupOpen("requestPermissionPopup");
+    DeviceOrientationEvent.requestPermission().then(response => {
+      if (response === 'granted') {
+        window.addEventListener("deviceorientation", handleOrientation, true);
+      }
+    }).catch(console.error);
+  } else {
+    // non iOS 13+
+    window.addEventListener("deviceorientation", handleOrientation, true);
+  }
+  
+  if(DeviceMotionEvent.requestPermission){
+    DeviceMotionEvent.requestPermission()
+    .then(permissionStatus => {
+      if(permissionStatus === 'granted'){
+        window.addEventListener('devicemotion', (e)=>{
+          if(!e.accelerationIncludingGravity){
+            alert('No accelerationIncludingGravity');
+            return;
+          }
+          alert(e.accelerationIncludingGravity.x);
+        });
+      }
+    })
+    .catch(console.error);
+  }else{
+    alert('No requestPermission');
+  }
+
+  const absolute = document.getElementById('absolute');
+  const alpha = document.getElementById('alpha');
+  const beta = document.getElementById('beta');
+  const gamma = document.getElementById('gamma');
+
+  /* 球の移動速度 */
+  var v_x = 0.0;
+  var v_y = 0.0;
+
+  /* G変化時のイベント関数 */
+  function handleOrientation(event) {
+    absolute.textContent = FormatReal(event.absolute,3,4);
+    alpha.textContent = FormatReal(event.alpha,3,4);
+    beta.textContent = FormatReal(event.beta,3,4);
+    gamma.textContent = FormatReal(event.gamma,3,4);
     
-    if(DeviceMotionEvent.requestPermission){
-      DeviceMotionEvent.requestPermission()
-      .then(permissionStatus => {
-        if(permissionStatus === 'granted'){
-          window.addEventListener('devicemotion', (e)=>{
-            if(!e.accelerationIncludingGravity){
-              alert('No accelerationIncludingGravity');
-              return;
-            }
-            alert(e.accelerationIncludingGravity.x);
-          });
-        }
-      })
-      .catch(console.error);
-    }else{
-      alert('No requestPermission');
-    }
+    v_x = v_x + event.gamma * 0.02;
+    v_y = v_y + event.beta * 0.02;
+    move(v_x,v_y);
+  }
 
-    const absolute = document.getElementById('absolute');
-    const alpha = document.getElementById('alpha');
-    const beta = document.getElementById('beta');
-    const gamma = document.getElementById('gamma');
+  function FormatReal(real, k1, k2){
+    let int = Math.floor(real);
+    let frc = real -int;
+    int = ('='.repeat(k1)+int).slice(k1);
+    frc = Math.floor(frc*Math.pow(10, k2)) % Math.pow(10, k2);
+    return int + '.' + frc;
+  }
 
-    /* 球の移動速度 */
-    var v_x = 0.0;
-    var v_y = 0.0;
-
-    /* G変化時のイベント関数 */
-    function handleOrientation(event) {
-      absolute.textContent = FormatReal(event.absolute,3,4);
-      alpha.textContent = FormatReal(event.alpha,3,4);
-      beta.textContent = FormatReal(event.beta,3,4);
-      gamma.textContent = FormatReal(event.gamma,3,4);
-      
-      v_x = v_x + event.gamma * 0.02;
-      v_y = v_y + event.beta * 0.02;
-      move(v_x,v_y);
-    }
-
-
-    function FormatReal(real, k1, k2){
-      let int = Math.floor(real);
-      let frc = real -int;
-      int = ('='.repeat(k1)+int).slice(k1);
-      frc = Math.floor(frc*Math.pow(10, k2)) % Math.pow(10, k2);
-      return int + '.' + frc;
-    }
-const NS = "http://www.w3.org/2000/svg";
-const svg = document.getElementById('svg');
-const debugwrite = document.getElementById('debug');
-// 自機（カーソル）
-let cursor_x = 30;
-let cursor_y = 50;
-const cursor_r = 10;
-const cursor = (function () {
-  const cursor = document.createElementNS(NS, 'circle');
-  cursor.setAttribute('cx', cursor_x);
-  cursor.setAttribute('cy', cursor_y);
-  cursor.setAttribute('r', cursor_r);
-  cursor.setAttribute('fill', "url(#sphere)");
-  cursor.setAttribute('id', 'cursor');
-  svg.appendChild(cursor);
-  return cursor
-})();
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById('svg');
+  const debugwrite = document.getElementById('debug');
+  // 自機（カーソル）
+  let cursor_x = 30;
+  let cursor_y = 50;
+  const cursor_r = 10;
+  //カーソルの生成とsvgへの配置
+  const cursor = (function () {
+    const cursor = document.createElementNS(NS, 'circle');
+    cursor.setAttribute('cx', cursor_x);
+    cursor.setAttribute('cy', cursor_y);
+    cursor.setAttribute('r', cursor_r);
+    cursor.setAttribute('fill', "url(#sphere)");
+    cursor.setAttribute('id', 'cursor');
+    svg.appendChild(cursor);
+    return cursor
+  })();
 
 function move(dx, dy) {
   const old_x = cursor_x;
@@ -217,9 +218,8 @@ function move(dx, dy) {
   cursor.setAttribute('cx', cursor_x);
   cursor.setAttribute('cy', cursor_y);
 };
-svg.appendChild(cursor);
 
-
+// 弧度法(rad法)に変換するための定数
 const DEG1 = Math.PI / 180;
 
 /**
@@ -390,8 +390,6 @@ function resetSVG() {
   //c.setAttribute('fill', "none");
   //svg.appendChild(c);
 }
-
-resetSVG();
 
 // 入力判定
 document.body.addEventListener('keydown',event=>{
@@ -578,8 +576,6 @@ function Effect(variation){
     }, 10);
   }
 }
-        </script>
-        <script>
 function pointerLock(elem){
   const list = [
     "requestPointerLock",
@@ -597,11 +593,13 @@ function pointerLock(elem){
 }
 
 window.onload = () =>{
+  resetSVG();
+
   const btn = document.getElementById('LockButton');
   btn.onclick = ()=>{
     pointerLock(btn);
     btn.hidden = true;
   };
 };
-        </script>
+</script>
 </html>
