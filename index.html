@@ -144,6 +144,10 @@
     const beta = document.getElementById('beta');
     const gamma = document.getElementById('gamma');
 
+    /* 球の移動速度 */
+    var v_x = 0.0;
+    var v_y = 0.0;
+
     /* G変化時のイベント関数 */
     function handleOrientation(event) {
       absolute.textContent = FormatReal(event.absolute,3,4);
@@ -151,8 +155,12 @@
       beta.textContent = FormatReal(event.beta,3,4);
       gamma.textContent = FormatReal(event.gamma,3,4);
       
-      move(event.gamma,event.beta);
+      v_x = v_x + event.gamma * 0.02;
+      v_y = v_y + event.beta * 0.02;
+      move(v_x,v_y);
     }
+
+
     function FormatReal(real, k1, k2){
       let int = Math.floor(real);
       let frc = real -int;
